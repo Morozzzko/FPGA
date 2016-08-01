@@ -19,6 +19,7 @@ reg [31:0] counter;
 
 wire [15:0] data;
 
+wire [7:0] als_result;
 assign als_result = data[11:4];
 
 assign initiate = 1'b0; //counter == 32'd50_000_000;
@@ -45,7 +46,7 @@ reg rs = 1'b1;
 always @(posedge clk) if (counter > 32'd3) rs = 1'b0;
 
 FTDI #(.FREQUENCY(50_000_000),
-       .BAUD_RATE(9600)) 
+       .BAUD_RATE(2)) 
     ftdi(.clk(clk),
          .reset(rs),
          .data(8'h4A),
@@ -57,7 +58,7 @@ FTDI #(.FREQUENCY(50_000_000),
          .baud_tick(baud_tick),
          .state_test(ftdi_state));
 
-always @(posedge clk) LED <= { FTDI_DTR, FTDI_TX, FTDI_RX, FTDI_CTS, ftdi_state, 1'b0 };
+always @(posedge clk) LED <= { FTDI_DTR, FTDI_TX, FTDI_RX, FTDI_CTS, ftdi_state, baud_tick, 1'b1 };
 
 always @(posedge clk) begin
     if (counter <= 32'd50_000_000)
