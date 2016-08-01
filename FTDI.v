@@ -10,7 +10,7 @@ module FTDI(input clk,
             output reg [1:0] state_test);
 parameter FREQUENCY = 4; // 50 MHz
 parameter BAUD_RATE = 2; 
-parameter BAUD_RG_WIDTH = 4; // floor(log_2(50_000_000)) + 1
+parameter BAUD_RG_WIDTH = 32; // floor(log_2(50_000_000)) + 1
 parameter BAUD_INCREMENT_BY = (BAUD_RATE << BAUD_RG_WIDTH) / FREQUENCY;
         
 localparam STATE_RESET = 2'b00;
@@ -61,7 +61,10 @@ end
 // baud rate generator
 
 always @(posedge clk) begin
-    baud_counter <= baud_counter[BAUD_RG_WIDTH-1:0] + BAUD_INCREMENT_BY;
+    case (state)
+        STATE_SENDING: baud_counter <= baud_counter[BAUD_RG_WIDTH-1:0] + BAUD_INCREMENT_BY;
+        default: baud_counter <= 0;
+    endcase
 end
 
 // FSM

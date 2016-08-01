@@ -37,18 +37,27 @@ ALS #(.FQ_FACTOR(50)) als(
     .ALS_SCK(ALS_SCK)
 );
 
-FTDI ftdi(.clk(clk),
-          .reset(1'b0),
-          .FTDI_DTR(FTDI_DTR),
-          .FTDI_RX(FTDI_RX),
-          .FTDI_TX(FTDI_TX),
-          .FTDI_CTS(FTDI_CTS));
+wire [1:0] ftdi_state;
+wire baud_tick;
 
-always @(posedge clk) begin
-    if (counter == 32'd50_000_000) begin
-        LED <= { FTDI_DTR, FTDI_TX, 6'b0 };
-    end
-end
+reg rs = 1'b1;
+
+always @(posedge clk) if (counter > 32'd3) rs = 1'b0;
+
+FTDI #(.FREQUENCY(50_000_000),
+       .BAUD_RATE(9600)) 
+    ftdi(.clk(clk),
+         .reset(rs),
+         .data(8'h4A),
+         .FTDI_DTR(FTDI_DTR),
+         .FTDI_RX(FTDI_RX),
+         .FTDI_TX(FTDI_TX),
+         .FTDI_CTS(FTDI_CTS),
+         .initialize(counter == 32'd25_000_000),
+         .baud_tick(baud_tick),
+         .state_test(ftdi_state));
+
+always @(posedge clk) LED <= { FTDI_DTR, FTDI_TX, FTDI_RX, FTDI_CTS, ftdi_state, 1'b0 };
 
 always @(posedge clk) begin
     if (counter <= 32'd50_000_000)
