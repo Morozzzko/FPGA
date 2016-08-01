@@ -1,21 +1,23 @@
 module ALS(
     input clk,
     input initiate,
+    input reset,
     output ready,
     output reg [15:0] data,
    
-    output reg ALS_CS,
+    output reg ALS_CS = 1'b1,
     input ALS_SDO,
-    output reg ALS_SCK
+    output reg ALS_SCK = 1'b1
 );
 
-localparam FQ_FACTOR = 50; // DE0-Nano operates at 50 MHz, ALS requires 1-4 MHz
-localparam FQ_UPDATE_RATIO = FQ_FACTOR / 2; // How frequent to invert ALS_SCK
+parameter FQ_FACTOR = 1; // DE0-Nano operates at 50 MHz, ALS requires 1-4 MHz
+// sent to 1 for debugging purpose
+parameter FQ_UPDATE_RATIO = FQ_FACTOR / 2; // How frequent to invert ALS_SCK
 
-localparam STATE_RESET = 2'b00;
-localparam STATE_IDLE = 2'b01;
-localparam STATE_READING = 2'b10;
-
+parameter STATE_RESET = 2'b00;
+parameter STATE_IDLE = 2'b01;
+parameter STATE_READING = 2'b10;
+    
 reg [5:0] fq_counter;
 reg [1:0] state = STATE_RESET;
 reg [3:0] spi_counter;
@@ -24,7 +26,7 @@ reg ALS_SCK_PREVIOUS;
 assign ready = state == STATE_IDLE;
 assign ALS_SCK_POSEDGE = (ALS_SCK_PREVIOUS == 1'b0) && (ALS_SCK == 1'b1);
 assign ALS_SCK_NEGEDGE = (ALS_SCK_PREVIOUS == 1'b1) && (ALS_SCK == 1'b0);
-assign READING_DONE = spi_counter = 4'hF && ALS__SCK_POSEDGE;
+assign READING_DONE = spi_counter == 4'hF && ALS_SCK_POSEDGE;
 
 // ALS_SCK_PREVIOUS
 
@@ -33,9 +35,7 @@ always @(posedge clk) begin
         ALS_SCK_PREVIOUS <= 1'b1;
     end
     else begin
-        if (ALS_SCK == ALS_SCK_PREVIOUS) begin
-            ALS_SCK_PREVIOUS <= ~ALS_SCK_PREVIOUS;
-        end
+        ALS_SCK_PREVIOUS <= ALS_SCK;
     end
 end
 
@@ -72,14 +72,14 @@ always @(posedge clk) begin
     else if (state == STATE_IDLE && initiate) begin
         ALS_CS <= 1'b0;
     end
-    else if (state == STATE_READING && 1'b0) begin // TODO: ADD CONDITION TO LEAVE
+    else if (state == STATE_READING && READING_DONE) begin // TODO: ADD CONDITION TO LEAVE
         ALS_CS <= 1'b1;
     end
 end
 
 // spi_counter
 always @(posedge clk) begin
-    if (state == STATE_RESET) begin
+    if (state == STATE_RESET || state == STATE_IDLE) begin
         spi_counter <= 4'b0;
     end
     else if (state == STATE_READING && ALS_SCK_NEGEDGE) begin
@@ -88,14 +88,31 @@ always @(posedge clk) begin
 end
 
 // data
-
 always @(posedge clk) begin
     if (state == STATE_RESET) begin
-        spi_counter <= 4'b0;
+        data <= 16'b0;
     end
     else if(state == STATE_READING && ALS_SCK_POSEDGE) begin
-        data <= {data[15:1], ALS_SDO};
+        data <= {data[14:0], ALS_SDO};
     end
 end
 
+// state
+
+always @(posedge clk) begin
+    case (state) 
+        STATE_RESET: state <= STATE_IDLE;
+        STATE_IDLE: begin
+            if (initiate) begin
+                state <= STATE_READING;
+            end
+        end
+        STATE_READING: begin
+            if (READING_DONE) begin
+                state <= STATE_IDLE;
+            end
+        end
+        default: state <= STATE_RESET;
+    endcase
+end
 endmodule
