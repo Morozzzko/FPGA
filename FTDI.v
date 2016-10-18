@@ -7,20 +7,23 @@ module FTDI(input clk,
             input FTDI_TX,
             output FTDI_CTS,
             output baud_tick,
-            output reg [1:0] state_test);
+            output reg [1:0] state_test,
+            output ready);
 parameter FREQUENCY = 4; // 50 MHz
-parameter BAUD_RATE = 2; 
+parameter BAUD_RATE = 2;
 parameter BAUD_RG_WIDTH = 32; // floor(log_2(50_000_000)) + 1
 parameter BAUD_INCREMENT_BY = ((BAUD_RATE << (BAUD_RG_WIDTH - 4)) + (FREQUENCY >> 5)) / (FREQUENCY >> 4); //(BAUD_RATE << BAUD_RG_WIDTH) / FREQUENCY;
-        
+
 localparam STATE_RESET = 2'b00;
 localparam STATE_IDLE = 2'b01;
-localparam STATE_SENDING = 2'b10; 
+localparam STATE_SENDING = 2'b10;
 
 reg [1:0] state = STATE_RESET;
 reg [3:0] data_counter = 3'b0;
 
 reg [7:0] data_to_send = 8'b0;
+
+assign ready = state == STATE_IDLE;
 
 always @(*) begin
     case (state)
