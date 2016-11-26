@@ -14,6 +14,11 @@ module main(
 
 // Search for `case (current_sensor)` for the list of all
 // places where you have to modify code to add new sensors
+// The core concepts of sensors modules:
+// 1. 8-bit data output
+// 2. Done flag is raised once data is available
+// 3. Done flag is not reset until a new query is run
+// 4. Ready and done flags are not the same
 
 parameter STATE_RESET = 2'b00;
 parameter STATE_IDLE = 2'b01;
@@ -25,27 +30,26 @@ initial LED <= 8'b0;
 
 reg [1:0] state = STATE_RESET;
 reg [1:0] state_previous = STATE_RESET;
-reg [3:0] current_sensor = 4'd0; // Default to first sensor
+reg [3:0] current_sensor = SENSOR_ALS; // Defaults to the first sensor
+wire reset_sensors = state == STATE_IDLE && state_previous != STATE_IDLE;
 
 reg [31:0] counter;
 
-wire [15:0] data;
-
 wire [7:0] als_result;
-assign als_result = data[11:4];
 
 reg initiate_sensor = 1'b0;
 reg initiate_ftdi = 1'b0;
 
-wire als_ready;
-wire ftdi_ready;
+wire als_ready, als_done;
+wire ftdi_ready, ftdi_done;
 
 ALS #(.FQ_FACTOR(50)) als(
     .clk(clk),
     .initiate(initiate_sensor && current_sensor == SENSOR_ALS),
     .ready(als_ready),
-    .data(data),
-    .reset(1'b0),
+    .done(als_done),
+    .data(als_result),
+    .reset(reset_sensors),
 
     .ALS_CS(ALS_CS),
     .ALS_SDO(ALS_SDO),
@@ -71,6 +75,7 @@ FTDI #(.FREQUENCY(50_000_000),
          .initialize(initiate_ftdi),
          .baud_tick(baud_tick),
          .ready(ftdi_ready),
+         .done(ftdi_done),
          .state_test(ftdi_state));
 
 always @(posedge clk) LED <= { FTDI_DTR, FTDI_TX, FTDI_RX, FTDI_CTS, ftdi_state, baud_tick, 1'b1 };
@@ -111,8 +116,9 @@ always @(posedge clk) begin // FSM
           // ftdi_ready is true
 
           // TODO
+          
         end
-        default: state <= STATE_RESET:
+        default: state <= STATE_RESET;
     endcase
 end
 
@@ -130,7 +136,8 @@ end
 always @(posedge clk) begin // initiate_ftdi
   if (state == STATE_MEASURE) begin
     case (current_sensor)
-      SENSOR_ALS: if (als_ready && ~initiate_sensor)
+      SENSOR_ALS: if (als_ready && ~initiate_sensor) begin
+      end
     endcase
   end
   else begin

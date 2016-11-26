@@ -3,7 +3,8 @@ module ALS(
     input initiate,
     input reset,
     output ready,
-    output reg [15:0] data,
+    output done,
+    output reg [7:0] data,
    
     output reg ALS_CS = 1'b1,
     input ALS_SDO,
@@ -12,21 +13,25 @@ module ALS(
 
 parameter FQ_FACTOR = 1; // DE0-Nano operates at 50 MHz, ALS requires 1-4 MHz
 // sent to 1 for debugging purpose
-parameter FQ_UPDATE_RATIO = FQ_FACTOR / 2; // How frequent to invert ALS_SCK
+parameter FQ_UPDATE_RATIO = FQ_FACTOR / 2; // How frequently invert ALS_SCK
 
 parameter STATE_RESET = 2'b00;
 parameter STATE_IDLE = 2'b01;
 parameter STATE_READING = 2'b10;
-    
+parameter STATE_DONE = 2'b11;
+   
+reg [15:0] spi_data;
 reg [5:0] fq_counter;
 reg [1:0] state = STATE_RESET;
 reg [3:0] spi_counter;
 reg ALS_SCK_PREVIOUS;
 
 assign ready = state == STATE_IDLE;
+assign done = state == STATE_DONE;
 assign ALS_SCK_POSEDGE = (ALS_SCK_PREVIOUS == 1'b0) && (ALS_SCK == 1'b1);
 assign ALS_SCK_NEGEDGE = (ALS_SCK_PREVIOUS == 1'b1) && (ALS_SCK == 1'b0);
 assign READING_DONE = spi_counter == 4'hF && ALS_SCK_POSEDGE;
+
 
 // ALS_SCK_PREVIOUS
 
@@ -90,10 +95,10 @@ end
 // data
 always @(posedge clk) begin
     if (state == STATE_RESET) begin
-        data <= 16'b0;
+        spi_data <= 16'b0;
     end
     else if(state == STATE_READING && ALS_SCK_POSEDGE) begin
-        data <= {data[14:0], ALS_SDO};
+        spi_data <= {spi_data[14:0], ALS_SDO};
     end
 end
 
@@ -109,10 +114,23 @@ always @(posedge clk) begin
         end
         STATE_READING: begin
             if (READING_DONE) begin
-                state <= STATE_IDLE;
+                state <= STATE_DONE;
             end
         end
         default: state <= STATE_RESET;
     endcase
+end
+
+// data
+
+initial data <= 8'd0;
+
+always @(posedge clk) begin
+  if (reset) begin
+    data <= 8'd0;
+  end 
+  else if (state == STATE_READING && READING_DONE) begin
+    data <= spi_data[11:4]; // indices found out empirically
+  end
 end
 endmodule
