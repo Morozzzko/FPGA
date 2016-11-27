@@ -1,6 +1,11 @@
 module main(
     input clk,
-    output reg [7:0] LED,
+    input [3:0] KEY,
+    output [6:0] HEX3,
+    output [6:0] HEX2,
+    output [6:0] HEX1,
+    output [6:0] HEX0,
+    output reg [7:0] LEDG,
 
     input FTDI_DTR,
     output FTDI_RX,
@@ -26,14 +31,94 @@ parameter STATE_MEASURE = 2'b10;
 parameter STATE_TRANSMIT = 2'b11;
 parameter SENSOR_ALS = 4'd0;
 
-initial LED <= 8'b0;
+initial LEDG <= 8'b0;
 
 reg [1:0] state = STATE_RESET;
 reg [1:0] state_previous = STATE_RESET;
 reg [3:0] current_sensor = SENSOR_ALS; // Defaults to the first sensor
 wire reset_sensors = state == STATE_IDLE && state_previous != STATE_IDLE;
 
-reg [31:0] counter;
+
+// ------------------------------------
+
+wire OK_PRESSED;
+wire OK_RELEASED;
+
+key_control key3(.clk(clk),
+                 .key(KEY[3]),
+                 .pressed(OK_PRESSED),
+                 .released(OK_RELEASED));
+
+
+// ------------------------------------
+
+localparam LETTER_A = 5'h10;
+localparam LETTER_D = 5'h11;
+localparam LETTER_E = 5'h12;
+localparam LETTER_L = 5'h13;
+localparam LETTER_O = 5'h14;
+localparam LETTER_O_SMALL = 5'h15;
+localparam LETTER_R = 5'h16;
+localparam LETTER_S = 5'h17;
+localparam LETTER_T = 5'h18;
+localparam LETTER_OFF = 5'h1F;
+
+reg [4:0] hex_data[0:3];
+
+DCDEC #(.A(LETTER_A), 
+        .D(LETTER_D), 
+        .E(LETTER_E), 
+        .L(LETTER_L), 
+        .O(LETTER_O),
+        .O_SMALL(LETTER_O_SMALL),
+        .R(LETTER_R), 
+        .S(LETTER_S), 
+        .T(LETTER_T),
+        .OFF(LETTER_OFF))
+       hex3(.in(hex_data[3]),
+            .out(HEX3));    
+
+DCDEC #(.A(LETTER_A), 
+        .D(LETTER_D), 
+        .E(LETTER_E), 
+        .L(LETTER_L), 
+        .O(LETTER_O),
+        .O_SMALL(LETTER_O_SMALL),
+        .R(LETTER_R), 
+        .S(LETTER_S),  
+        .T(LETTER_T),
+        .OFF(LETTER_OFF))
+       hex2(.in(hex_data[2]),
+            .out(HEX2));
+
+DCDEC #(.A(LETTER_A), 
+        .D(LETTER_D), 
+        .E(LETTER_E), 
+        .L(LETTER_L), 
+        .O(LETTER_O),
+        .O_SMALL(LETTER_O_SMALL),
+        .R(LETTER_R), 
+        .S(LETTER_S),  
+        .T(LETTER_T),
+        .OFF(LETTER_OFF))
+       hex1(.in(hex_data[1]),
+            .out(HEX1));
+
+DCDEC #(.A(LETTER_A), 
+        .D(LETTER_D), 
+        .E(LETTER_E), 
+        .L(LETTER_L), 
+        .O(LETTER_O),
+        .O_SMALL(LETTER_O_SMALL),
+        .R(LETTER_R), 
+        .S(LETTER_S),  
+        .T(LETTER_T),
+        .OFF(LETTER_OFF))
+       hex0(.in(hex_data[0]),
+            .out(HEX0));
+
+// ------------------------------------
+
 
 wire [7:0] als_result;
 
@@ -56,17 +141,15 @@ ALS #(.FQ_FACTOR(50)) als(
     .ALS_SCK(ALS_SCK)
 );
 
+// ------------------------------------
+
 wire [1:0] ftdi_state;
 wire baud_tick;
-
-reg rs = 1'b1;
-
-always @(posedge clk) if (counter > 32'd3) rs = 1'b0;
 
 FTDI #(.FREQUENCY(50_000_000),
        .BAUD_RATE(2))
     ftdi(.clk(clk),
-         .reset(rs),
+         .reset(1'b0),
          .data(8'h4A),
          .FTDI_DTR(FTDI_DTR),
          .FTDI_RX(FTDI_RX),
@@ -78,71 +161,37 @@ FTDI #(.FREQUENCY(50_000_000),
          .done(ftdi_done),
          .state_test(ftdi_state));
 
-always @(posedge clk) LED <= { FTDI_DTR, FTDI_TX, FTDI_RX, FTDI_CTS, ftdi_state, baud_tick, 1'b1 };
-
-always @(posedge clk) begin
-    if (counter <= 32'd50_000_000) begin
-        counter <= counter + 1'b1;
-    end
-    else begin
-        counter <= 32'b0;
-    end
-end
+// ------------------------------------
+always @(posedge clk) LEDG <= { FTDI_DTR, FTDI_TX, FTDI_RX, FTDI_CTS, ftdi_state, baud_tick, 1'b1 };
 
 always @(posedge clk) begin // state_previous
   state_previous <= state;
 end
 
-always @(posedge clk) begin // FSM
-  // todo: add conditions
-    case (state)
-        STATE_RESET: if (state_previous == STATE_RESET) state <= STATE_IDLE;
-        STATE_IDLE: begin
-          // general logic: go to STATE_MEASURE if
-          // sensor is ready and initiate_sensor flag is set
-          case (current_sensor)
-            SENSOR_ALS: if (als_ready && initiate_sensor) state <= STATE_MEASURE;
-          endcase
-        end
-        STATE_MEASURE: begin
-          // general logic: go to STATE_TRANSMIT if
-          // init_ftdi is up and ftdi_ready is true
-          case (current_sensor)
-            SENSOR_ALS: if (initiate_sensor) state <= STATE_TRANSMIT;
-          endcase
-        end
-        STATE_TRANSMIT: begin
-          // general logic: go to STATE_IDLE if
-          // ftdi_ready is true
-
-          // TODO
-          
-        end
-        default: state <= STATE_RESET;
-    endcase
+// ------------------------------------
+            
+initial begin
+  hex_data[3] <= LETTER_OFF;
+  hex_data[2] <= LETTER_OFF;
+  hex_data[1] <= LETTER_OFF;
+  hex_data[0] <= LETTER_OFF;
 end
 
-always @(posedge clk) begin // initiate_sensor
-  if (state == STATE_IDLE) begin
-    case (current_sensor)
-      SENSOR_ALS: initiate_sensor = als_ready;
-    endcase
-  end
-  else begin
-    initiate_sensor = 1'b0;
-  end
-end
-
-always @(posedge clk) begin // initiate_ftdi
-  if (state == STATE_MEASURE) begin
-    case (current_sensor)
-      SENSOR_ALS: if (als_ready && ~initiate_sensor) begin
-      end
-    endcase
-  end
-  else begin
-    initiate_ftdi <= 1'b0;
-  end
+always @(posedge clk) begin // hex_data
+  case (state) 
+    STATE_IDLE: begin
+      hex_data[3] <= LETTER_P;
+      hex_data[2] <= LETTER_R;
+      hex_data[1] <= LETTER_OFF;
+      hex_data[0] <= 5'd1;
+    end
+    default: begin
+      hex_data[3] <= LETTER_OFF;
+      hex_data[2] <= LETTER_OFF;
+      hex_data[1] <= LETTER_OFF;
+      hex_data[0] <= LETTER_OFF;
+    end
+  endcase
 end
 
 endmodule

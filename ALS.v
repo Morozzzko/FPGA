@@ -77,7 +77,7 @@ always @(posedge clk) begin
     else if (state == STATE_IDLE && initiate) begin
         ALS_CS <= 1'b0;
     end
-    else if (state == STATE_READING && READING_DONE) begin // TODO: ADD CONDITION TO LEAVE
+    else if (state == STATE_READING && READING_DONE) begin
         ALS_CS <= 1'b1;
     end
 end
@@ -130,7 +130,7 @@ always @(posedge clk) begin
     data <= 8'd0;
   end 
   else if (state == STATE_READING && READING_DONE) begin
-    data <= spi_data[11:4]; // indices found out empirically
+    data <= spi_data[11:4]; // indices found empirically
   end
 end
 endmodule
