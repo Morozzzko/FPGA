@@ -8,22 +8,30 @@ module FTDI(input clk,
             output FTDI_CTS,
             output baud_tick,
             output reg [1:0] state_test,
-            output ready);
+            output ready,
+            output done);
 parameter FREQUENCY = 4; // 50 MHz
 parameter BAUD_RATE = 2;
-parameter BAUD_RG_WIDTH = 32; // floor(log_2(50_000_000)) + 1
+parameter BAUD_RG_WIDTH = 60; // floor(log_2(50_000_000)) + 1
 parameter BAUD_INCREMENT_BY = ((BAUD_RATE << (BAUD_RG_WIDTH - 4)) + (FREQUENCY >> 5)) / (FREQUENCY >> 4); //(BAUD_RATE << BAUD_RG_WIDTH) / FREQUENCY;
 
 localparam STATE_RESET = 2'b00;
 localparam STATE_IDLE = 2'b01;
 localparam STATE_SENDING = 2'b10;
+localparam STATE_DONE = 2'b11;
 
 reg [1:0] state = STATE_RESET;
+reg [1:0] state_previous = STATE_RESET;
 reg [3:0] data_counter = 3'b0;
 
 reg [7:0] data_to_send = 8'b0;
 
 assign ready = state == STATE_IDLE;
+assign done = state == STATE_DONE;
+
+always @(posedge clk) begin
+  state_previous <= state;
+end
 
 always @(*) begin
     case (state)
@@ -74,14 +82,17 @@ end
 
 always @(posedge clk) begin
     case (state)
-        STATE_RESET: state <= STATE_IDLE;
+        STATE_RESET: if (state_previous == STATE_RESET) state <= STATE_IDLE;
         STATE_IDLE: begin
             if (reset) state <= STATE_RESET;
             else if (should_initialize) state <= STATE_SENDING;
         end
         STATE_SENDING: begin
             if (reset) state <= STATE_RESET;
-            else if (data_counter > 4'h9) state <= STATE_IDLE;
+            else if (data_counter > 4'h9) state <= STATE_DONE;
+        end
+        STATE_DONE: begin
+            state <= STATE_IDLE;
         end
     endcase
 end

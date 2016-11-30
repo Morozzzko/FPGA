@@ -37,45 +37,22 @@
 # -------------------------------------------------------------------------- #
 
 
-set_global_assignment -name FAMILY "Cyclone IV E"
-set_global_assignment -name DEVICE EP4CE22F17C6
-set_global_assignment -name TOP_LEVEL_ENTITY ALS
+set_global_assignment -name FAMILY "Cyclone II"
+set_global_assignment -name DEVICE EP2C20F484C7
+set_global_assignment -name TOP_LEVEL_ENTITY main
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 15.1.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "19:08:44  JULY 10, 2016"
 set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
-set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
-set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (Verilog)"
-set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
-set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
-set_location_assignment PIN_L3 -to LED[7]
-set_location_assignment PIN_B1 -to LED[6]
-set_location_assignment PIN_F3 -to LED[5]
-set_location_assignment PIN_D1 -to LED[4]
-set_location_assignment PIN_A11 -to LED[3]
-set_location_assignment PIN_B13 -to LED[2]
-set_location_assignment PIN_A13 -to LED[1]
-set_location_assignment PIN_A15 -to LED[0]
-set_location_assignment PIN_R8 -to clk
-set_location_assignment PIN_J13 -to ALS_CS
-set_location_assignment PIN_J16 -to ALS_SDO
-set_location_assignment PIN_M10 -to ALS_SCK
-set_global_assignment -name SIMULATION_MODE FUNCTIONAL
-set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
-set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST ON -section_id eda_simulation
+set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
+set_location_assignment PIN_H14 -to ALS_CS
+set_location_assignment PIN_F15 -to ALS_SDO
+set_location_assignment PIN_F12 -to ALS_SCK
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ALS_CS
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ALS_SCK
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ALS_SDO
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_CTS
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_DTR
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_RX
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_TX
-set_location_assignment PIN_P11 -to FTDI_DTR
-set_location_assignment PIN_R10 -to FTDI_RX
-set_location_assignment PIN_P9 -to FTDI_TX
-set_location_assignment PIN_N11 -to FTDI_CTS
 set_location_assignment PIN_A13 -to GPIO_0[0]
 set_location_assignment PIN_B13 -to GPIO_0[1]
 set_location_assignment PIN_A14 -to GPIO_0[2]
@@ -112,42 +89,6 @@ set_location_assignment PIN_J18 -to GPIO_0[32]
 set_location_assignment PIN_K20 -to GPIO_0[33]
 set_location_assignment PIN_L19 -to GPIO_0[34]
 set_location_assignment PIN_L18 -to GPIO_0[35]
-set_location_assignment PIN_H12 -to GPIO_1[0]
-set_location_assignment PIN_H13 -to GPIO_1[1]
-set_location_assignment PIN_H14 -to GPIO_1[2]
-set_location_assignment PIN_G15 -to GPIO_1[3]
-set_location_assignment PIN_E14 -to GPIO_1[4]
-set_location_assignment PIN_E15 -to GPIO_1[5]
-set_location_assignment PIN_F15 -to GPIO_1[6]
-set_location_assignment PIN_G16 -to GPIO_1[7]
-set_location_assignment PIN_F12 -to GPIO_1[8]
-set_location_assignment PIN_F13 -to GPIO_1[9]
-set_location_assignment PIN_C14 -to GPIO_1[10]
-set_location_assignment PIN_D14 -to GPIO_1[11]
-set_location_assignment PIN_D15 -to GPIO_1[12]
-set_location_assignment PIN_D16 -to GPIO_1[13]
-set_location_assignment PIN_C17 -to GPIO_1[14]
-set_location_assignment PIN_C18 -to GPIO_1[15]
-set_location_assignment PIN_C19 -to GPIO_1[16]
-set_location_assignment PIN_C20 -to GPIO_1[17]
-set_location_assignment PIN_D19 -to GPIO_1[18]
-set_location_assignment PIN_D20 -to GPIO_1[19]
-set_location_assignment PIN_E20 -to GPIO_1[20]
-set_location_assignment PIN_F20 -to GPIO_1[21]
-set_location_assignment PIN_E19 -to GPIO_1[22]
-set_location_assignment PIN_E18 -to GPIO_1[23]
-set_location_assignment PIN_G20 -to GPIO_1[24]
-set_location_assignment PIN_G18 -to GPIO_1[25]
-set_location_assignment PIN_G17 -to GPIO_1[26]
-set_location_assignment PIN_H17 -to GPIO_1[27]
-set_location_assignment PIN_J15 -to GPIO_1[28]
-set_location_assignment PIN_H18 -to GPIO_1[29]
-set_location_assignment PIN_N22 -to GPIO_1[30]
-set_location_assignment PIN_N21 -to GPIO_1[31]
-set_location_assignment PIN_P15 -to GPIO_1[32]
-set_location_assignment PIN_N15 -to GPIO_1[33]
-set_location_assignment PIN_P17 -to GPIO_1[34]
-set_location_assignment PIN_P18 -to GPIO_1[35]
 set_instance_assignment -name IO_STANDARD LVTTL -to GPIO_0[0]
 set_instance_assignment -name IO_STANDARD LVTTL -to GPIO_0[1]
 set_instance_assignment -name IO_STANDARD LVTTL -to GPIO_0[2]
@@ -521,10 +462,6 @@ set_location_assignment PIN_Y7 -to SRAM_LB_N
 set_location_assignment PIN_T8 -to SRAM_OE_N
 set_location_assignment PIN_W7 -to SRAM_UB_N
 set_location_assignment PIN_AA10 -to SRAM_WE_N
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
-set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name INCREMENTAL_VECTOR_INPUT_SOURCE /home/moroz/Projects/FPGA/ALS.vwf
 set_global_assignment -name VERILOG_FILE DCDEC.v
 set_global_assignment -name VERILOG_FILE key_control.v
 set_global_assignment -name VERILOG_FILE main.v
@@ -533,6 +470,7 @@ set_global_assignment -name VECTOR_WAVEFORM_FILE ALS.vwf
 set_global_assignment -name VERILOG_FILE FTDI.v
 set_global_assignment -name VECTOR_WAVEFORM_FILE FTDI.vwf
 set_global_assignment -name CDF_FILE Chain1.cdf
-set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
-set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
